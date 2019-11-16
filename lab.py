@@ -1,10 +1,36 @@
 import math as m
 import random as r
+import pandas as pd
+
 # Definir o numero de genes: 25
 # Definir o tamanho da populacao:16
 # Definir a probabilidade de cruzamento: 0.8
 # Definir a probabilidade de mutacao: 0.1
 
+### Importar dados de treinamento
+dataTraining = pd.read_csv("training.csv")
+ID = dataTraining["ID"].tolist()
+
+x1 = dataTraining["Cement"].tolist()
+x2 = dataTraining["Blasr"].tolist()
+x3 = dataTraining["FlyAsh"].tolist()
+x4 = dataTraining["Water"].tolist()
+x5 = dataTraining["Superplasticizer"].tolist()
+x6 = dataTraining["CoarseAggregate"].tolist()
+x7 = dataTraining["FineAggregate"].tolist()
+x8 = dataTraining["Age"].tolist()
+
+strength = dataTraining["strength"].tolist()
+
+### Set-up
+numGenes = 6
+numPopulation = 4
+rules = {"e": [["e", "o", "e"], ["v"]],
+         "o": ["+", "-", "/", "*"],
+         "v": ["x", "y"]}
+
+
+### Funcoes
 def generateCromossomes(numGenes, numPopulation):
     popul = []
     for i in range(0, numPopulation):
@@ -16,7 +42,6 @@ def generateCromossomes(numGenes, numPopulation):
     return popul
 
 def updateGrammar(term, j, k):
-    print('update')
     if grammar[j] == term:
         grammar[j+1:j+1] = rules[term][crom[k]%len(rules[term])]
         del grammar[j]
@@ -30,14 +55,9 @@ def verifyEnd(grammar):
 
     return end
 
-numGenes = 6
-numPopulation = 4
+
+### Programa
 popul = generateCromossomes(numGenes, numPopulation)
-
-rules = {"e": [["e", "o", "e"], ["v"]],
-         "o": ["+", "-", "/", "*"],
-         "v": ["x", "y"]}
-
 grammarList = []
 for i in range(0, len(popul)):
     crom = popul[i]
@@ -64,4 +84,6 @@ for i in range(0, len(popul)):
         p +=1
 
     grammarList.append(grammar)
+
+
 print(grammarList)
