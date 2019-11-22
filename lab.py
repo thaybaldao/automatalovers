@@ -2,36 +2,26 @@ import math as m
 import random as r
 import pandas as pd
 import numpy as np
-
-# Definir o numero de genes: 25
-# Definir o tamanho da populacao:16
-# Definir a probabilidade de cruzamento: 0.8
-# Definir a probabilidade de mutacao: 0.1
+import csv
 
 ### Importar dados de treinamento
-# dataTraining = pd.read_csv("training.csv")
-# ID = dataTraining["ID"].tolist()
-#
-# x1 = dataTraining["Cement"].tolist()
-# x2 = dataTraining["Blasr"].tolist()
-# x3 = dataTraining["FlyAsh"].tolist()
-# x4 = dataTraining["Water"].tolist()
-# x5 = dataTraining["Superplasticizer"].tolist()
-# x6 = dataTraining["CoarseAggregate"].tolist()
-# x7 = dataTraining["FineAggregate"].tolist()
-# x8 = dataTraining["Age"].tolist()
-#
-# strength = dataTraining["strength"].tolist()
-
-x_data = [0.9, 0.3, 0.5, 0.88, 0.6]
-y_data = [0.8, 0.1, 0.2, 0.5, 0.7]
-desired = [1.61, 0.19, 0.45, 1.2744, 1.06]
+dataTraining = pd.read_csv("training.csv")
+ID = dataTraining["ID"].tolist()
+x1Data = dataTraining["Cement"].tolist()
+x2Data = dataTraining["Blasr"].tolist()
+x3Data = dataTraining["FlyAsh"].tolist()
+x4Data = dataTraining["Water"].tolist()
+x5Data = dataTraining["Superplasticizer"].tolist()
+x6Data = dataTraining["CoarseAggregate"].tolist()
+x7Data= dataTraining["FineAggregate"].tolist()
+x8Data = dataTraining["Age"].tolist()
+strengthData = dataTraining["strength"].tolist()
 
 ### Set-up
-rules = {"e": [["e", "o", "e"], ["v"]],
-         "o": ["+", "-", "/", "*"],
-         "v": ["x", "y"]}
-
+rules = {"e": [["e", "a", "e"], ["(", "e", "a", "e", ")"], ["p", "(", "e", ")"], ["v"]],
+         "a": ["+", "-", "/", "*"],
+         "p": ["m.cos", "m.sin", "m.log", "m.sqrt"],
+         "v": ["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"]}
 
 ### Funcoes
 def generateCromossomes(numGenes, numPopulation):
@@ -44,7 +34,10 @@ def generateCromossomes(numGenes, numPopulation):
     return popul
 
 def updateGrammar(term, j, k, grammar, crom):
-    if grammar[j] == term:
+    if len(grammar) == 1 and term == "e":
+        grammar[j+1:j+1] = rules[term][crom[k]%(len(rules[term]) - 1)]
+        del grammar[j]
+    elif grammar[j] == term:
         grammar[j+1:j+1] = rules[term][crom[k]%len(rules[term])]
         del grammar[j]
     return grammar
@@ -52,7 +45,7 @@ def updateGrammar(term, j, k, grammar, crom):
 def verifyEnd(grammar):
     end = True
     for i in range(0, len(grammar)):
-        if grammar[i] == "e" or grammar[i] == "o" or grammar[i] == "v":
+        if grammar[i] == "e" or grammar[i] == "p" or grammar[i] == "a" or grammar[i] == "v":
             end = False
             break
     return end
@@ -71,11 +64,21 @@ def avaliateGrammar(grammarList):
             mse.append(1000000)
         else:
             produced = []
-            for j in range(0, len(x_data)):
-                x = x_data[j]
-                y = y_data[j]
-                produced.append(eval(grammarStringList[i]))
-            mse.append(np.square(np.subtract(produced, desired)).mean())
+            for j in range(0, len(x1Data)):
+                x1 = x1Data[j]
+                x2 = x2Data[j]
+                x3 = x3Data[j]
+                x4 = x4Data[j]
+                x5 = x5Data[j]
+                x6 = x6Data[j]
+                x7 = x7Data[j]
+                x8 = x8Data[j]
+                try:
+                    evaluatingData = eval(grammarStringList[i])
+                except:
+                    evaluatingData = 1000000
+                produced.append(evaluatingData)
+            mse.append(np.square(np.subtract(produced, strengthData)).mean())
     # print("before", mse)
     min = 1000000
     max = -1
@@ -93,6 +96,24 @@ def avaliateGrammar(grammarList):
                 mse[i] = 0
     # print("min", min, "max", max, "after", mse)
     return mse
+
+def computeErrorWithoutNormalize(bestExp):
+    produced = []
+    for j in range(0, len(x1Data)):
+        x1 = x1Data[j]
+        x2 = x2Data[j]
+        x3 = x3Data[j]
+        x4 = x4Data[j]
+        x5 = x5Data[j]
+        x6 = x6Data[j]
+        x7 = x7Data[j]
+        x8 = x8Data[j]
+        try:
+            evaluatingData = eval(bestExp)
+        except:
+            evaluatingData = 1000000
+        produced.append(evaluatingData)
+    return np.square(np.subtract(produced, strengthData)).mean()
 
 def tournament(mse):
     winners = []
@@ -143,7 +164,7 @@ def grammarGenerator(popul, numGrammarFormation):
             for k in range(0, len(crom)):
                 j = 0
                 while j <len(grammar):
-                    if grammar[j] == "e" or grammar[j] == "o" or grammar[j] == "v":
+                    if grammar[j] == "e" or grammar[j] == "p" or grammar[j] == "a" or grammar[j] == "v":
                         break
                     j += 1
 
@@ -152,10 +173,12 @@ def grammarGenerator(popul, numGrammarFormation):
                 else:
                     if grammar[j] == "e":
                         grammar = updateGrammar("e", j, k, grammar, crom)
-                    elif grammar[j] == "o":
-                        grammar = updateGrammar("o", j, k, grammar, crom)
+                    elif grammar[j] == "a":
+                        grammar = updateGrammar("a", j, k, grammar, crom)
                     elif grammar[j] == "v":
                         grammar = updateGrammar("v", j, k, grammar, crom)
+                    elif grammar[j] == "p":
+                        grammar = updateGrammar("p", j, k, grammar, crom)
             p +=1
 
         grammarList.append(grammar)
@@ -168,6 +191,45 @@ def chooseBestIndividual(popul, numGrammarFormation):
     # print(mse)
     bestCrom = grammarList[mse.index(min(mse))]
     return ''.join([str(elem) for elem in bestCrom])
+
+def generateSample(bestExp):
+    ### Importar dados de teste
+    dataTraining = pd.read_csv("testing.csv")
+    IDTest = dataTraining["ID"].tolist()
+    x1Test = dataTraining["Cement"].tolist()
+    x2Test = dataTraining["Blasr"].tolist()
+    x3Test = dataTraining["FlyAsh"].tolist()
+    x4Test = dataTraining["Water"].tolist()
+    x5Test = dataTraining["Superplasticizer"].tolist()
+    x6Test = dataTraining["CoarseAggregate"].tolist()
+    x7Test = dataTraining["FineAggregate"].tolist()
+    x8Test = dataTraining["Age"].tolist()
+
+    csvData = []
+    aux = ["ID", "strength"]
+    csvData.append(aux)
+    for j in range(0, len(x1Test)):
+        x1 = x1Test[j]
+        x2 = x2Test[j]
+        x3 = x3Test[j]
+        x4 = x4Test[j]
+        x5 = x5Test[j]
+        x6 = x6Test[j]
+        x7 = x7Test[j]
+        x8 = x8Test[j]
+        try:
+            evaluatingData = eval(bestExp)
+        except:
+            evaluatingData = 1000000
+
+        aux = [IDTest[j], evaluatingData]
+        csvData.append(aux)
+
+    with open('submission.csv', 'w') as csvFile:
+        writer = csv.writer(csvFile)
+        writer.writerows(csvData)
+
+    csvFile.close()
 
 def run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation):
     popul = generateCromossomes(numGenes, numPopulation)
@@ -186,13 +248,15 @@ def run(numIterations, mutationProbability, crossingProbability, numGenes, numPo
 
     bestExp = chooseBestIndividual(popul, numGrammarFormation)
     print(bestExp)
+    print(computeErrorWithoutNormalize(bestExp))
+    generateSample(bestExp)
 
 
 # para executar o codigo
-numIterations = 2000
+numIterations = 100
 mutationProbability = 0.1
 crossingProbability = 0.9
-numGenes = 6
-numPopulation = 100
-numGrammarFormation = 15
+numGenes = 30
+numPopulation = 1000
+numGrammarFormation = 5
 run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation)
