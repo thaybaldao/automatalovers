@@ -9,19 +9,19 @@ import numpy as np
 # Definir a probabilidade de mutacao: 0.1
 
 ### Importar dados de treinamento
-dataTraining = pd.read_csv("training.csv")
-ID = dataTraining["ID"].tolist()
-
-x1 = dataTraining["Cement"].tolist()
-x2 = dataTraining["Blasr"].tolist()
-x3 = dataTraining["FlyAsh"].tolist()
-x4 = dataTraining["Water"].tolist()
-x5 = dataTraining["Superplasticizer"].tolist()
-x6 = dataTraining["CoarseAggregate"].tolist()
-x7 = dataTraining["FineAggregate"].tolist()
-x8 = dataTraining["Age"].tolist()
-
-strength = dataTraining["strength"].tolist()
+# dataTraining = pd.read_csv("training.csv")
+# ID = dataTraining["ID"].tolist()
+#
+# x1 = dataTraining["Cement"].tolist()
+# x2 = dataTraining["Blasr"].tolist()
+# x3 = dataTraining["FlyAsh"].tolist()
+# x4 = dataTraining["Water"].tolist()
+# x5 = dataTraining["Superplasticizer"].tolist()
+# x6 = dataTraining["CoarseAggregate"].tolist()
+# x7 = dataTraining["FineAggregate"].tolist()
+# x8 = dataTraining["Age"].tolist()
+#
+# strength = dataTraining["strength"].tolist()
 
 x_data = [0.9, 0.3, 0.5, 0.88, 0.6]
 y_data = [0.8, 0.1, 0.2, 0.5, 0.7]
@@ -163,9 +163,9 @@ def grammarGenerator(popul, numGrammarFormation):
 
 def chooseBestIndividual(popul, numGrammarFormation):
     grammarList = grammarGenerator(popul, numGrammarFormation)
-    print(grammarList)
+    # print(grammarList)
     mse = avaliateGrammar(grammarList)
-    print(mse)
+    # print(mse)
     bestCrom = grammarList[mse.index(min(mse))]
     return ''.join([str(elem) for elem in bestCrom])
 
@@ -188,4 +188,11 @@ def run(numIterations, mutationProbability, crossingProbability, numGenes, numPo
     print(bestExp)
 
 
-run(100000, 0.1, 0.9, 6, 4, 15)
+# para executar o codigo
+numIterations = 2000
+mutationProbability = 0.1
+crossingProbability = 0.9
+numGenes = 6
+numPopulation = 100
+numGrammarFormation = 15
+run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation)
