@@ -24,7 +24,7 @@ rules = {"e": [["e", "a", "e"], ["(", "e", "a", "e", ")"], ["p", "(", "e", ")"],
          "v": ["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"]}
 
 ### Funcoes
-def generateCromossomes(numGenes, numPopulation):
+def generatePopulation(numGenes, numPopulation):
     popul = []
     for i in range(0, numPopulation):
         crom = []
@@ -33,34 +33,35 @@ def generateCromossomes(numGenes, numPopulation):
         popul.append(crom)
     return popul
 
-def updateGrammar(term, j, k, grammar, crom):
-    if len(grammar) == 1 and term == "e":
-        grammar[j+1:j+1] = rules[term][crom[k]%(len(rules[term]) - 1)]
-        del grammar[j]
-    elif grammar[j] == term:
-        grammar[j+1:j+1] = rules[term][crom[k]%len(rules[term])]
-        del grammar[j]
-    return grammar
+def updateExpression(expr, term, j, k, crom):
+    if not (len(expr) == 1 and term == "e"):
+        index = crom[k]%len(rules[term])
+    else:
+        index = crom[k]%(len(rules[term]) - 1)
 
-def verifyEnd(grammar):
+    expr[j+1:j+1] = rules[term][index]
+    del expr[j]
+    return expr
+
+def verifyEnd(expr):
     end = True
-    for i in range(0, len(grammar)):
-        if grammar[i] == "e" or grammar[i] == "p" or grammar[i] == "a" or grammar[i] == "v":
+    for i in range(0, len(expr)):
+        if expr[i] == "e" or expr[i] == "p" or expr[i] == "a" or expr[i] == "v":
             end = False
             break
     return end
 
-def convertGrammar(grammarList):
-    grammarStringList = []
-    for i in range(0, len(grammarList)):
-        grammarStringList.append(''.join([str(elem) for elem in grammarList[i]]))
-    return grammarStringList
+def convertExpression(expressionsList):
+    expressionStringList = []
+    for i in range(0, len(expressionsList)):
+        expressionStringList.append(''.join([str(elem) for elem in expressionsList[i]]))
+    return expressionStringList
 
-def avaliateGrammar(grammarList):
-    grammarStringList = convertGrammar(grammarList)
+def avaliateExpressions(expressionsList):
+    expressionStringList = convertExpression(expressionsList)
     mse = []
-    for i in range(0, len(grammarStringList)):
-        if not verifyEnd(grammarList[i]):
+    for i in range(0, len(expressionStringList)):
+        if not verifyEnd(expressionsList[i]):
             mse.append(1000000)
         else:
             produced = []
@@ -74,12 +75,11 @@ def avaliateGrammar(grammarList):
                 x7 = x7Data[j]
                 x8 = x8Data[j]
                 try:
-                    evaluatingData = eval(grammarStringList[i])
+                    evaluatingData = eval(expressionStringList[i])
                 except:
                     evaluatingData = 1000000
                 produced.append(evaluatingData)
             mse.append(np.square(np.subtract(produced, strengthData)).mean())
-    # print("before", mse)
     min = 1000000
     max = -1
     for i in range(0, len(mse)):
@@ -94,7 +94,6 @@ def avaliateGrammar(grammarList):
                 mse[i] = (mse[i] - min)/(max - min)
             else:
                 mse[i] = 0
-    # print("min", min, "max", max, "after", mse)
     return mse
 
 def computeErrorWithoutNormalize(bestExp):
@@ -117,7 +116,7 @@ def computeErrorWithoutNormalize(bestExp):
 
 def tournament(mse):
     winners = []
-    for i in mse:
+    for i in range(0,len(mse)):
         player1 = r.randint(0, len(mse)-1)
         player2 = r.randint(0, len(mse)-1)
 
@@ -154,42 +153,32 @@ def mutation(popul, mutationProbability):
 
     return popul
 
-def grammarGenerator(popul, numGrammarFormation):
-    grammarList = []
+def expressionsGenerator(popul, numIterationsCrom):
+    expressionsList = []
     for i in range(0, len(popul)):
         crom = popul[i]
-        grammar = ["e"]
+        expr = ["e"]
         p = 0
-        while not verifyEnd(grammar) and p < numGrammarFormation:
+        while not verifyEnd(expr) and p < numIterationsCrom:
             for k in range(0, len(crom)):
                 j = 0
-                while j <len(grammar):
-                    if grammar[j] == "e" or grammar[j] == "p" or grammar[j] == "a" or grammar[j] == "v":
+                while j < len(expr):
+                    if expr[j] == "e" or expr[j] == "p" or expr[j] == "a" or expr[j] == "v":
                         break
                     j += 1
 
-                if j == len(grammar):
+                if j == len(expr):
                     break
                 else:
-                    if grammar[j] == "e":
-                        grammar = updateGrammar("e", j, k, grammar, crom)
-                    elif grammar[j] == "a":
-                        grammar = updateGrammar("a", j, k, grammar, crom)
-                    elif grammar[j] == "v":
-                        grammar = updateGrammar("v", j, k, grammar, crom)
-                    elif grammar[j] == "p":
-                        grammar = updateGrammar("p", j, k, grammar, crom)
-            p +=1
+                     expr = updateExpression(expr, expr[j], j, k, crom)
+            p += 1
+        expressionsList.append(expr)
+    return expressionsList
 
-        grammarList.append(grammar)
-    return grammarList
-
-def chooseBestIndividual(popul, numGrammarFormation):
-    grammarList = grammarGenerator(popul, numGrammarFormation)
-    # print(grammarList)
-    mse = avaliateGrammar(grammarList)
-    # print(mse)
-    bestCrom = grammarList[mse.index(min(mse))]
+def chooseBestIndividual(popul, numIterationsCrom):
+    expressionsList = expressionsGenerator(popul, numIterationsCrom)
+    mse = avaliateExpressions(expressionsList)
+    bestCrom = expressionsList[mse.index(min(mse))]
     return ''.join([str(elem) for elem in bestCrom])
 
 def generateSample(bestExp):
@@ -231,32 +220,26 @@ def generateSample(bestExp):
 
     csvFile.close()
 
-def run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation):
-    popul = generateCromossomes(numGenes, numPopulation)
-    for i in range(0, numIterations):
-        grammarList = grammarGenerator(popul, numGrammarFormation)
-        # print(grammarList)
-        mse = avaliateGrammar(grammarList)
-        # print(mse)
+def run(numGenerations, mutationProbability, crossingProbability, numGenes, numPopulation, numIterationsCrom):
+    popul = generatePopulation(numGenes, numPopulation)
+    for i in range(0, numGenerations):
+        expressionsList = expressionsGenerator(popul, numIterationsCrom)
+        mse = avaliateExpressions(expressionsList)
         winners = tournament(mse)
-        # print(winners)
-        # print(popul)
         popul = crossing(popul, winners, crossingProbability)
-        # print(popul)
         popul = mutation(popul, mutationProbability)
-        # print(popul)
 
-    bestExp = chooseBestIndividual(popul, numGrammarFormation)
+    bestExp = chooseBestIndividual(popul, numIterationsCrom)
     print(bestExp)
     print(computeErrorWithoutNormalize(bestExp))
     generateSample(bestExp)
 
 
 # para executar o codigo
-numIterations = 100
+numIterations = 50
 mutationProbability = 0.1
-crossingProbability = 0.9
+crossingProbability = 0.8
 numGenes = 30
 numPopulation = 1000
-numGrammarFormation = 5
+numGrammarFormation = 6
 run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation)
