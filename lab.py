@@ -79,7 +79,6 @@ def avaliateGrammar(grammarList):
                     evaluatingData = 1000000
                 produced.append(evaluatingData)
             mse.append(np.square(np.subtract(produced, strengthData)).mean())
-    # print("before", mse)
     min = 1000000
     max = -1
     for i in range(0, len(mse)):
@@ -94,7 +93,6 @@ def avaliateGrammar(grammarList):
                 mse[i] = (mse[i] - min)/(max - min)
             else:
                 mse[i] = 0
-    # print("min", min, "max", max, "after", mse)
     return mse
 
 def computeErrorWithoutNormalize(bestExp):
@@ -117,7 +115,7 @@ def computeErrorWithoutNormalize(bestExp):
 
 def tournament(mse):
     winners = []
-    for i in mse:
+    for i in range(0,len(mse)):
         player1 = r.randint(0, len(mse)-1)
         player2 = r.randint(0, len(mse)-1)
 
@@ -186,9 +184,7 @@ def grammarGenerator(popul, numGrammarFormation):
 
 def chooseBestIndividual(popul, numGrammarFormation):
     grammarList = grammarGenerator(popul, numGrammarFormation)
-    # print(grammarList)
     mse = avaliateGrammar(grammarList)
-    # print(mse)
     bestCrom = grammarList[mse.index(min(mse))]
     return ''.join([str(elem) for elem in bestCrom])
 
@@ -235,16 +231,10 @@ def run(numIterations, mutationProbability, crossingProbability, numGenes, numPo
     popul = generateCromossomes(numGenes, numPopulation)
     for i in range(0, numIterations):
         grammarList = grammarGenerator(popul, numGrammarFormation)
-        # print(grammarList)
         mse = avaliateGrammar(grammarList)
-        # print(mse)
         winners = tournament(mse)
-        # print(winners)
-        # print(popul)
         popul = crossing(popul, winners, crossingProbability)
-        # print(popul)
         popul = mutation(popul, mutationProbability)
-        # print(popul)
 
     bestExp = chooseBestIndividual(popul, numGrammarFormation)
     print(bestExp)
@@ -255,8 +245,8 @@ def run(numIterations, mutationProbability, crossingProbability, numGenes, numPo
 # para executar o codigo
 numIterations = 100
 mutationProbability = 0.1
-crossingProbability = 0.9
-numGenes = 30
-numPopulation = 1000
-numGrammarFormation = 5
+crossingProbability = 0.8
+numGenes = 40
+numPopulation = 7000
+numGrammarFormation = 15
 run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation)
