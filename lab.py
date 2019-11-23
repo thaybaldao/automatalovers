@@ -236,10 +236,10 @@ def run(numGenerations, mutationProbability, crossingProbability, numGenes, numP
 
 
 # para executar o codigo
-numIterations = 50
+numIterations = 100
 mutationProbability = 0.1
-crossingProbability = 0.8
+crossingProbability = 0.7
 numGenes = 30
 numPopulation = 1000
-numGrammarFormation = 6
+numGrammarFormation = 5
 run(numIterations, mutationProbability, crossingProbability, numGenes, numPopulation, numGrammarFormation)
